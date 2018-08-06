@@ -12,7 +12,7 @@ const rootRutes: Routes = [
   }, {
     path: '',
     redirectTo: 'control-room',
-    pathMatch:'full'
+    pathMatch: 'full'
   }
 ];
 
