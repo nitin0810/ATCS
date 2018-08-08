@@ -11,6 +11,12 @@ interface JunctionInfo {
     };
 }
 
+enum MarkerStatus {
+    New_Draggable,
+    New_Fixed,
+    Configured
+}
+
 @Component({
     selector: 'app-control-room',
     templateUrl: './control-room.component.html',
@@ -19,14 +25,14 @@ interface JunctionInfo {
 export class ControlRoomComponent implements OnInit {
 
     @ViewChild('map') mapRef: ElementRef;
-    @ViewChild('infowindow') infoWindow: ElementRef;
     @ViewChild('centerControl') centerControl: ElementRef;
     @ViewChild('bottomRightControl') bottomRightControl: ElementRef;
 
 
     map: any; // google map
     newJunctionInfo: JunctionInfo; // contains the form input values of new junction being added
-    newMarker: any;
+    newMarker: any; // marker to reflect new junction
+    // newInfoWindow: any; // info window attached to new junction
 
     constructor() { }
 
@@ -47,17 +53,11 @@ export class ControlRoomComponent implements OnInit {
         // add custom form controls on map
         this.map.controls[google.maps.ControlPosition.BOTTOM_CENTER].push(this.centerControl.nativeElement);
         this.map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(this.bottomRightControl.nativeElement);
-
-
-        // map.addListener('click', this.addMarkerOnClick.bind(this, map));
-
     }
 
     onAddJunctionClick() {
 
     }
-
-    // ADDJUNCITON MODAL RELATED METHODS
 
     dropPinOnMap(formValue: any) {
         // console.log(formValue);
@@ -65,19 +65,22 @@ export class ControlRoomComponent implements OnInit {
         this.closeAddJunctionModal();
         const mapCenter = this.map.getCenter();
         this.newMarker = this.addMarker(mapCenter, true);
-        const content = this.getInfoWindowContent({
-            name: this.newJunctionInfo.name,
-            lat: mapCenter.lat().toFixed(4),
-            lng: mapCenter.lng().toFixed(4)
-        });
 
+        this.setMarkerStatus(this.newMarker, MarkerStatus.New_Draggable);
+        this.setMarkerTooltip(this.newMarker);
+        this.attachClickEventToMarker(this.newMarker);
+        // setTimeout used in order to atach window after marker drop animation is complete
         setTimeout(() => {
-            // used in order to atach window after marker drop animation is complete
-            this.attachInfoWindowToMarker(this.newMarker, content);
+            this.setMarkerInfoWindow(this.newMarker, {
+                name: this.newJunctionInfo.name,
+                lat: mapCenter.lat().toFixed(4),
+                lng: mapCenter.lng().toFixed(4)
+            });
             this.attachDragEventToMarker(this.newMarker);
         }, 500);
 
     }
+
 
     onAddJunctionFormSave(formValue: any) {
         // console.log(formValue);
@@ -85,8 +88,46 @@ export class ControlRoomComponent implements OnInit {
         this.closeAddJunctionModal();
         const pos = { lat: formValue.pos.lat, lng: formValue.pos.lng };
         this.newMarker = this.addMarker(pos);
-
+        this.map.setCenter(pos);
+        this.setMarkerStatus(this.newMarker, MarkerStatus.New_Fixed);
+        this.setMarkerTooltip(this.newMarker);
+        this.attachClickEventToMarker(this.newMarker);
+        // setTimeout used in order to atach window after marker drop animation is complete
+        setTimeout(() => {
+            this.setMarkerInfoWindow(this.newMarker, {
+                name: this.newJunctionInfo.name,
+                lat: pos.lat,
+                lng: pos.lng
+            });
+        }, 500);
     }
+
+    setMarkerStatus(marker: any, status: number) {
+        // add new property status to markera and initialize it with given status
+        marker.status = status;
+    }
+
+    setMarkerInfoWindow(marker: any, info: any) {
+        const content = this.getInfoWindowContent(marker, info);
+        this.attachInfoWindowToMarker(marker, content);
+    }
+
+    setMarkerTooltip(marker: any) {
+        switch (marker.status) {
+            case MarkerStatus.New_Draggable:
+                marker.setTitle('Click to fix position of marker');
+                break;
+            case MarkerStatus.New_Fixed:
+                marker.setTitle('Click to configure');
+                break;
+            case MarkerStatus.Configured:
+                marker.setTitle('Click to fix position of marker');
+                break;
+            default:
+                marker.setTitle('');
+        }
+    }
+
 
     closeAddJunctionModal() { $('#addJunctionModal').modal('hide'); }
 
@@ -105,37 +146,49 @@ export class ControlRoomComponent implements OnInit {
     }
 
     attachInfoWindowToMarker(marker: any, content: any) {
-        console.log(content);
 
-        const infowindow = new google.maps.InfoWindow({
+        // add new property infoWindow to marker which stores reference of the attached infoWindow
+        marker.infoWindow = new google.maps.InfoWindow({
             content: content
         });
 
-        infowindow.open(this.map, marker);
-        // marker.addListener('click', () => {
-        // });
-
+        marker.infoWindow.open(this.map, marker);
     }
 
-    getInfoWindowContent(info?: any) {
+    detachInfoWindowFromMarker(marker: any) {
+        marker.infoWindow.close();
+        marker.infoWindow = null;
+    }
+
+    getInfoWindowContent(marker: any, info: any) {
 
 
         const div = document.createElement('div');
         div.id = 'newJuncInfoWindow';
         const p1 = document.createElement('p');
         p1.innerHTML = `<b>Name: </b>${info.name}`;
+        div.appendChild(p1);
+
         const p2 = document.createElement('p');
         p2.innerHTML = `<b>Lat: </b>${info.lat}<b>Long: </b>${info.lng}`;
-        const msg = document.createElement('small');
-        msg.innerText = 'Move the marker to required position.';
-        const btn = document.createElement('button');
-        btn.innerText = 'Fix Here';
-        btn.addEventListener('click', this.fixMarkerPosition.bind(this));
-
-        div.appendChild(p1);
         div.appendChild(p2);
-        div.appendChild(msg);
-        div.appendChild(btn);
+
+        if (marker.status === MarkerStatus.New_Draggable) {
+
+            const msg = document.createElement('small');
+            msg.innerText = 'Move the marker to required position.';
+            const btn = document.createElement('button');
+            btn.innerText = 'Fix Here';
+            btn.addEventListener('click', this.onFixhereBtn.bind(this, marker));
+
+            div.appendChild(msg);
+            div.appendChild(btn);
+        } else if (marker.status === MarkerStatus.New_Fixed) {
+            const btn = document.createElement('button');
+            btn.innerText = 'Configure';
+            // btn.addEventListener('click', this.fixMarkerPosition.bind(this));
+            div.appendChild(btn);
+        }
         return div;
         // return `
         //     <div>
@@ -148,8 +201,23 @@ export class ControlRoomComponent implements OnInit {
         //         `;
     }
 
-    fixMarkerPosition() {
-        this.newMarker.set('draggable', false);
+    onFixhereBtn(marker: any) {
+
+        this.fixMarkerPosition(marker);
+        marker.status = MarkerStatus.New_Fixed;
+        this.setMarkerTooltip(marker);
+        this.detachInfoWindowFromMarker(marker);
+        const pos = marker.getPosition();
+        const content = this.getInfoWindowContent(marker, {
+            name: this.newJunctionInfo.name,
+            lat: pos.lat().toFixed(4),
+            lng: pos.lng().toFixed(4)
+        });
+        this.attachInfoWindowToMarker(marker, content);
+    }
+
+    fixMarkerPosition(marker: any) {
+        marker.set('draggable', false);
     }
 
     attachDragEventToMarker(marker: any) {
@@ -174,8 +242,25 @@ export class ControlRoomComponent implements OnInit {
         });
     }
 
+    attachClickEventToMarker(marker: any) {
+        marker.addListener('click', (e) => {
+
+            // add only in case there is not any already opened window with this marker
+            if (!marker.infoWindow.getMap()) { // returns null when there is no opened window
+                const pos = marker.getPosition();
+                this.setMarkerInfoWindow(marker, {
+                    name: this.newJunctionInfo.name,
+                    lat: pos.lat().toFixed(4),
+                    lng: pos.lng().toFixed(4)
+                });
+            }
+        });
+    }
+
     updateInfoWindowContent(info: any) {
+
         const div = document.getElementById('newJuncInfoWindow');
+        if (!div) { return; }
         const children = div.childNodes;
         (<HTMLElement>children.item(1)).innerHTML = `<b>Lat: </b> ${info.lat}<b>Long: </b>${info.lng}`;
     }
