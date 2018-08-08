@@ -6,11 +6,13 @@ import { FormsModule } from '@angular/forms';
 import { HeaderModule } from '../header/header.module';
 
 import { ControlRoomComponent } from './control-room.component';
+import { JunctionSVGModule } from '../junction-svg/junction-svg.module';
 
 @NgModule({
   imports: [
     // CommonModule,
     HeaderModule,
+    JunctionSVGModule,
     FormsModule,
     RouterModule.forChild([
       {

@@ -10,7 +10,7 @@
     <button data-toggle="modal" data-target="#addJunctionModal">A</button>
     <button (click)="onAddJunctionClick()">B</button>
     <button (click)="onAddJunctionClick()">C</button>
-    
+
 </div>
 
 
@@ -36,10 +36,7 @@
                                     <option>4</option>
                                 </select>
                             </div>
-                            <div style="height: 100px;width: 100px;border: 1px solid black">
-                                <h6>Junction Image here</h6>
-                                <!-- <img src="" alt="Junction image here"> -->
-                            </div>
+                            <app-junction-svg [armLength]="'2'"></app-junction-svg>
                         </div>
                         <div class="col-6">
                             <div class="form-group">

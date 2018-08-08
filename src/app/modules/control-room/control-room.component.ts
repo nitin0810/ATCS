@@ -47,12 +47,26 @@ export class ControlRoomComponent implements OnInit {
         // create map centered at IPSAA DAY CARE,GURGAON
         this.map = new google.maps.Map(
             this.mapRef.nativeElement,
-            { zoom: 14, center: ipsaa, mapTypeControl: false, styles: this.giveStyledMap() }
+            {
+                zoom: 14, center: ipsaa, mapTypeControl: false, streetViewControl: false, styles: this.giveStyledMap(),
+                zoomControlOptions: {
+                    position: google.maps.ControlPosition.LEFT_BOTTOM
+                },
+            }
         );
+        this.addControlsOnMap();
+    }
 
+    addControlsOnMap() {
         // add custom form controls on map
         this.map.controls[google.maps.ControlPosition.BOTTOM_CENTER].push(this.centerControl.nativeElement);
         this.map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(this.bottomRightControl.nativeElement);
+    }
+
+    removeControlsFromMap() {
+        // remove custom form controls on map
+        this.map.controls[google.maps.ControlPosition.BOTTOM_CENTER].pop();
+        this.map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].pop();
     }
 
     onAddJunctionClick() {
@@ -69,6 +83,7 @@ export class ControlRoomComponent implements OnInit {
         this.setMarkerStatus(this.newMarker, MarkerStatus.New_Draggable);
         this.setMarkerTooltip(this.newMarker);
         this.attachClickEventToMarker(this.newMarker);
+        this.removeControlsFromMap();
         // setTimeout used in order to atach window after marker drop animation is complete
         setTimeout(() => {
             this.setMarkerInfoWindow(this.newMarker, {
@@ -92,6 +107,7 @@ export class ControlRoomComponent implements OnInit {
         this.setMarkerStatus(this.newMarker, MarkerStatus.New_Fixed);
         this.setMarkerTooltip(this.newMarker);
         this.attachClickEventToMarker(this.newMarker);
+        this.removeControlsFromMap();
         // setTimeout used in order to atach window after marker drop animation is complete
         setTimeout(() => {
             this.setMarkerInfoWindow(this.newMarker, {
@@ -186,7 +202,7 @@ export class ControlRoomComponent implements OnInit {
         } else if (marker.status === MarkerStatus.New_Fixed) {
             const btn = document.createElement('button');
             btn.innerText = 'Configure';
-            // btn.addEventListener('click', this.fixMarkerPosition.bind(this));
+            btn.addEventListener('click', this.onConfigureBtn.bind(this));
             div.appendChild(btn);
         }
         return div;
@@ -218,6 +234,13 @@ export class ControlRoomComponent implements OnInit {
 
     fixMarkerPosition(marker: any) {
         marker.set('draggable', false);
+    }
+
+    onConfigureBtn() {
+        console.log('aaaaaa');
+        this.addControlsOnMap();
+
+
     }
 
     attachDragEventToMarker(marker: any) {
