@@ -289,11 +289,6 @@ export class ControlRoomComponent implements OnInit {
     }
 
 
-
-    onBtnControlClick() {
-        console.log('aaaaaaa');
-    }
-
     giveStyledMap() {
         // night mode map
         return [

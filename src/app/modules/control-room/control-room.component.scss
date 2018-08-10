@@ -7,3 +7,8 @@
     background-color: grey;
     height: calc(100vh - 60px);
   }
+
+  .inline-control{
+    display: inline-block !important;
+    width: 33%;
+  }

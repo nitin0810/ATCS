@@ -2,8 +2,16 @@
 <!-- MAP DIV -->
 <div #map id="mapDiv"></div>
 
-<div #centerControl style="padding-bottom: 20px">
-    <button (click)="onBtnControlClick()">Button</button>
+<div #centerControl style="padding-bottom: 50px">
+    <div class="form-group">
+        <input type="text" class="form-control inline-control" placeholder="Enter Keyword">
+        <select name="location" class="form-control inline-control">
+            <option value="" selected disabled hidden>Select Location</option>
+        </select>
+        <select name="" class="form-control inline-control">
+            <option value="" selected disabled hidden>Category</option>
+        </select>
+    </div>
 </div>
 
 <div #bottomRightControl style="padding-right: 20px">
@@ -29,14 +37,17 @@
                         <div class="col-6">
                             <div class="form-group">
                                 <label>No. of Arms</label>
-                                <select class="form-control" ngModel name="noOfJunctions" #noOfJ="ngModel" required>
-                                    <option>1</option>
+                                <select class="form-control" [ngModel]="'3'" name="noOfJunctions" #noOfJ="ngModel" required>
                                     <option>2</option>
                                     <option>3</option>
                                     <option>4</option>
+                                    <option>5</option>
+                                    <option>6</option>
+                                    <option>7</option>
+                                    <option>8</option>
                                 </select>
                             </div>
-                            <app-junction-svg [armLength]="'2'"></app-junction-svg>
+                            <app-junction-svg [armLength]="noOfJ.value"></app-junction-svg>
                         </div>
                         <div class="col-6">
                             <div class="form-group">
@@ -58,4 +69,3 @@
         </div>
     </div>
 </div>
-
